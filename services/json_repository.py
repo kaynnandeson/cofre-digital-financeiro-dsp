@@ -179,16 +179,20 @@ def deletar_arquivo_fisico(caminho_arquivo: Path) -> bool:
 
 def calcular_hash_sha256(caminho_arquivo: Path) -> str:
     sha256_hash = hashlib.sha256()
-    
+
     with open(caminho_arquivo, "rb") as f:
-        for byte_block in iter(lambda: f.read(4096), b""):
+        for byte_block in iter(
+            lambda: f.read(4096),
+            b""
+        ):
             sha256_hash.update(byte_block)
-            
+
     hash_calculado = sha256_hash.hexdigest()
+
     logger.debug(
-        "Hash SHA 256 calculado para %s: %s", 
-        caminho_arquivo.name, 
+        "Hash SHA 256 calculado para %s: %s",
+        caminho_arquivo.name,
         hash_calculado
     )
-    
+
     return hash_calculado
