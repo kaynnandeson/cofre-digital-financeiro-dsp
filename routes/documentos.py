@@ -7,6 +7,7 @@ from fastapi import (
     UploadFile,
     File,
     Form,
+    Query,
     status
 )
 from fastapi.responses import FileResponse
@@ -21,7 +22,9 @@ from services.json_repository import (
     ler_json,
     remover,
     salvar_arquivo_fisico,
-    calcular_hash_sha256
+    calcular_hash_sha256,
+    deletar_arquivo_fisico,
+    filtrar
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -118,13 +121,30 @@ def criar_documento(
     "",
     response_model=list[Documento],
 )
-def listar_documentos():
-    documentos = ler_json(
-        DOCUMENTOS_FILE
+def listar_documentos(
+    extensao: str | None = Query(
+        default=None
+    ),
+    centro_de_custo: str | None = Query(
+        default=None
+    ),
+    competencia: str | None = Query(
+        default=None
+    ),
+):
+    criterios = {
+        "extensao": extensao,
+        "centro_de_custo": centro_de_custo,
+        "competencia": competencia,
+    }
+
+    documentos = filtrar(
+        DOCUMENTOS_FILE,
+        criterios,
     )
 
     logger.info(
-        "Listagem de documentos: %d registro(s).",
+        "Listagem/filtragem de documentos: %d resultado(s).",
         len(documentos),
     )
 
@@ -194,9 +214,7 @@ def atualizar_documento(
     documento_id: int,
     documento: Documento,
 ):
-    dados = documento.model_dump(
-        mode="json"
-    )
+    dados = documento.model_dump(mode="json")
 
     dados["id"] = documento_id
 
@@ -228,10 +246,12 @@ def atualizar_documento(
     status_code=status.HTTP_200_OK,
 )
 def excluir_documento(documento_id: int):
-    if not remover(
+    documento = buscar_por_id(
         DOCUMENTOS_FILE,
         documento_id,
-    ):
+    )
+
+    if not documento:
         logger.warning(
             "Tentativa de remover documento inexistente: %s",
             documento_id,
@@ -241,6 +261,18 @@ def excluir_documento(documento_id: int):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Documento não encontrado.",
         )
+
+    caminho_arquivo = (
+        ARQUIVOS_DIR /
+        documento["nome_armazenado"]
+    )
+
+    deletar_arquivo_fisico(caminho_arquivo)
+
+    remover(
+        DOCUMENTOS_FILE,
+        documento_id,
+    )
 
     logger.info(
         "Documento removido: %s",
