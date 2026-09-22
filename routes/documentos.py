@@ -13,7 +13,7 @@ from fastapi import (
 from fastapi.responses import FileResponse
 
 from core.logging_config import logger
-from models.documento import Documento
+from models.documento import Documento, Extensao
 
 from services.json_repository import (
     adicionar,
@@ -60,6 +60,12 @@ def criar_documento(
         )
 
     extensao = Path(nome_original).suffix.lower()
+
+    if extensao not in [item.value for item in Extensao]:
+        raise HTTPException(
+            status_code=400,
+            detail="Extensao de arquivo não permitida."
+        )
 
     documentos = ler_json(DOCUMENTOS_FILE)
 

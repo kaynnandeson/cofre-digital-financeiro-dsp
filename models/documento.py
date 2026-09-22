@@ -6,6 +6,7 @@ class Extensao(str, Enum):
     PDF = ".pdf"
     CSV = ".csv"
     XML = ".xml"
+    COMPROVANTE = "comprovante"
     TXT = ".txt"
     BIN = ".bin"
 class Documento(BaseModel):
