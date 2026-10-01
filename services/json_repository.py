@@ -151,6 +151,42 @@ def filtrar(
             
     return resultados
 
+def calcular_estatisticas(
+    arquivo: Path,
+    ) -> dict[str, Any]:
+    dados = ler_json(arquivo)
+
+    quantidade_por_extensao = {}
+    quantidade_por_categoria = {}
+
+    tamanho_total = 0
+    valor_total = 0
+
+    for item in dados:
+        extensao = item.get("extensao")
+        categoria = item.get("categoria")
+
+        if extensao:
+            quantidade_por_extensao[extensao] = (
+                quantidade_por_extensao.get(extensao, 0) + 1
+            )
+
+        if categoria:
+            quantidade_por_categoria[categoria] = (
+                quantidade_por_categoria.get(categoria, 0) + 1
+            )
+
+        tamanho_total += item.get("tamanho", 0)
+        valor_total += item.get("valor", 0)
+
+    return {
+        "quantidade_total": len(dados),
+        "tamanho_total": tamanho_total,
+        "quantidade_por_extensao": quantidade_por_extensao,
+        "quantidade_por_categoria": quantidade_por_categoria,
+        "valor_total": valor_total,
+    }
+
 
 def salvar_arquivo_fisico(
     arquivo_upload: UploadFile, 

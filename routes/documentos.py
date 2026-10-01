@@ -24,7 +24,8 @@ from services.json_repository import (
     salvar_arquivo_fisico,
     calcular_hash_sha256,
     deletar_arquivo_fisico,
-    filtrar
+    filtrar,
+    calcular_estatisticas,
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -156,6 +157,19 @@ def listar_documentos(
 
     return documentos
 
+@router.get(
+    "/estatisticas",
+)
+def obter_estatisticas():
+    estatisticas = calcular_estatisticas(
+        DOCUMENTOS_FILE
+    )
+
+    logger.info(
+        "Estatísticas dos documentos consultadas."
+    )
+
+    return estatisticas
 
 @router.get(
     "/{documento_id}",
