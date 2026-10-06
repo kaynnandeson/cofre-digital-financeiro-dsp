@@ -232,3 +232,44 @@ def calcular_hash_sha256(caminho_arquivo: Path) -> str:
     )
 
     return hash_calculado
+
+def verificar_integridade_global(
+    arquivo_json: Path,
+    diretorio_arquivos: Path,
+) -> dict[str, int]:
+
+    documentos = ler_json(arquivo_json)
+
+    integros = 0
+    alterados = 0
+    nao_localizados = 0
+
+    for documento in documentos:
+        caminho_arquivo = (
+            diretorio_arquivos /
+            documento["nome_armazenado"]
+        )
+
+        # Arquivo está cadastrado no JSON,
+        # mas não existe fisicamente
+        if not caminho_arquivo.exists():
+            nao_localizados += 1
+            continue
+
+        sha256_atual = calcular_hash_sha256(
+            caminho_arquivo
+        )
+
+        sha256_armazenado = documento["sha256"]
+
+        if sha256_atual == sha256_armazenado:
+            integros += 1
+        else:
+            alterados += 1
+
+    return {
+        "documentos_verificados": len(documentos),
+        "documentos_integros": integros,
+        "documentos_alterados": alterados,
+        "arquivos_nao_localizados": nao_localizados,
+    }

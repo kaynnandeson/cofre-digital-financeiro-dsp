@@ -226,6 +226,69 @@ def baixar_documento(documento_id: int):
         filename=documento["nome_original"]
     )
 
+@router.get(
+    "/{documento_id}/integridade"
+)
+def verificar_integridade(documento_id: int):
+    documento = buscar_por_id(
+        DOCUMENTOS_FILE,
+        documento_id
+    )
+
+    if not documento:
+        logger.warning(
+            "Tentativa de verificar integridade de documento inexistente: %s",
+            documento_id,
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Documento não encontrado."
+        )
+
+    caminho_arquivo = (
+        ARQUIVOS_DIR /
+        documento["nome_armazenado"]
+    )
+
+    if not caminho_arquivo.exists():
+        logger.warning(
+            "Arquivo físico não encontrado para verificação: %s",
+            documento["nome_armazenado"],
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Arquivo físico não encontrado."
+        )
+
+    sha256_atual = calcular_hash_sha256(
+        caminho_arquivo
+    )
+
+    sha256_armazenado = documento["sha256"]
+
+    integro = sha256_atual == sha256_armazenado
+
+    if integro:
+        logger.info(
+            "Integridade confirmada para o documento: %s",
+            documento_id,
+        )
+    else:
+        logger.warning(
+            "Alteração detectada no documento: %s",
+            documento_id,
+        )
+
+    return {
+        "id": documento_id,
+        "nome_original": documento["nome_original"],
+        "sha256_armazenado": sha256_armazenado,
+        "sha256_atual": sha256_atual,
+        "integro": integro
+    }
+
 @router.put(
     "/{documento_id}",
     response_model=Documento,
