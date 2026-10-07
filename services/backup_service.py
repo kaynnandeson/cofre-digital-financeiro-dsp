@@ -4,7 +4,6 @@ from pathlib import Path
 
 from services.json_repository import ler_json
 
-
 def criar_backup(
     arquivo_json: Path,
     diretorio_arquivos: Path,
@@ -19,7 +18,7 @@ def criar_backup(
     )
 
     data_hora = datetime.now().strftime(
-        "%Y-%m-%d_%H-%M-%S"
+        "%Y-%m-%d_%H-%M-%S-%f"
     )
 
     nome_backup = f"backup_{data_hora}.zip"
