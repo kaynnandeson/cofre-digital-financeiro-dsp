@@ -153,11 +153,13 @@ def filtrar(
 
 def calcular_estatisticas(
     arquivo: Path,
-    ) -> dict[str, Any]:
+) -> dict[str, Any]:
     dados = ler_json(arquivo)
 
     quantidade_por_extensao = {}
     quantidade_por_categoria = {}
+    quantidade_por_competencia = {}
+    quantidade_por_centro_de_custo = {}
 
     tamanho_total = 0
     valor_total = 0
@@ -165,25 +167,58 @@ def calcular_estatisticas(
     for item in dados:
         extensao = item.get("extensao")
         categoria = item.get("categoria")
+        competencia = item.get("competencia")
+        centro_de_custo = item.get("centro_de_custo")
 
         if extensao:
             quantidade_por_extensao[extensao] = (
-                quantidade_por_extensao.get(extensao, 0) + 1
+                quantidade_por_extensao.get(
+                    extensao,
+                    0
+                ) + 1
             )
 
         if categoria:
             quantidade_por_categoria[categoria] = (
-                quantidade_por_categoria.get(categoria, 0) + 1
+                quantidade_por_categoria.get(
+                    categoria,
+                    0
+                ) + 1
             )
 
-        tamanho_total += item.get("tamanho", 0)
-        valor_total += item.get("valor", 0)
+        if competencia:
+            quantidade_por_competencia[competencia] = (
+                quantidade_por_competencia.get(
+                    competencia,
+                    0
+                ) + 1
+            )
+
+        if centro_de_custo:
+            quantidade_por_centro_de_custo[centro_de_custo] = (
+                quantidade_por_centro_de_custo.get(
+                    centro_de_custo,
+                    0
+                ) + 1
+            )
+
+        tamanho_total += item.get(
+            "tamanho",
+            0
+        )
+
+        valor_total += item.get(
+            "valor",
+            0
+        )
 
     return {
         "quantidade_total": len(dados),
         "tamanho_total": tamanho_total,
         "quantidade_por_extensao": quantidade_por_extensao,
         "quantidade_por_categoria": quantidade_por_categoria,
+        "quantidade_por_competencia": quantidade_por_competencia,
+        "quantidade_por_centro_de_custo": quantidade_por_centro_de_custo,
         "valor_total": valor_total,
     }
 
