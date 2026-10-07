@@ -1,9 +1,10 @@
+
 from pathlib import Path
 from datetime import datetime
 
 from fastapi import (
     APIRouter,
-    HTTPException, 
+    HTTPException,
     UploadFile,
     File,
     Form,
@@ -37,6 +38,7 @@ router = APIRouter(
     tags=["Documentos"]
 )
 
+
 @router.post(
     "",
     response_model=Documento,
@@ -55,6 +57,10 @@ def criar_documento(
     nome_original = arquivo.filename
 
     if not nome_original:
+        logger.warning(
+            "Tentativa de upload de arquivo sem nome."
+        )
+
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="O arquivo deve possuir um nome."
@@ -63,8 +69,13 @@ def criar_documento(
     extensao = Path(nome_original).suffix.lower()
 
     if extensao not in [item.value for item in Extensao]:
+        logger.warning(
+            "Tentativa de upload com extensão não permitida: %s",
+            extensao,
+        )
+
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Extensao de arquivo não permitida."
         )
 
@@ -157,6 +168,7 @@ def listar_documentos(
 
     return documentos
 
+
 @router.get(
     "/estatisticas",
 )
@@ -170,6 +182,7 @@ def obter_estatisticas():
     )
 
     return estatisticas
+
 
 @router.get(
     "/{documento_id}",
@@ -192,7 +205,13 @@ def obter_documento(documento_id: int):
             detail="Documento não encontrado.",
         )
 
+    logger.info(
+        "Documento consultado: %s",
+        documento_id,
+    )
+
     return documento
+
 
 @router.get(
     "/{documento_id}/download"
@@ -204,6 +223,11 @@ def baixar_documento(documento_id: int):
     )
 
     if not documento:
+        logger.warning(
+            "Tentativa de download de documento inexistente: %s",
+            documento_id,
+        )
+
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Documento não encontrado."
@@ -215,16 +239,28 @@ def baixar_documento(documento_id: int):
     )
 
     if not caminho_arquivo.exists():
+        logger.warning(
+            "Arquivo físico não encontrado para download: %s",
+            documento["nome_armazenado"],
+        )
+
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Arquivo físico não encontrado."
         )
+
+    logger.info(
+        "Download realizado: id=%s, nome=%s",
+        documento_id,
+        documento["nome_original"],
+    )
 
     return FileResponse(
         path=caminho_arquivo,
         media_type=documento["tipo_mime"],
         filename=documento["nome_original"]
     )
+
 
 @router.get(
     "/{documento_id}/integridade"
@@ -289,6 +325,7 @@ def verificar_integridade(documento_id: int):
         "integro": integro
     }
 
+
 @router.put(
     "/{documento_id}",
     response_model=Documento,
@@ -350,7 +387,9 @@ def excluir_documento(documento_id: int):
         documento["nome_armazenado"]
     )
 
-    deletar_arquivo_fisico(caminho_arquivo)
+    deletar_arquivo_fisico(
+        caminho_arquivo
+    )
 
     remover(
         DOCUMENTOS_FILE,
