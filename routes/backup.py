@@ -22,7 +22,7 @@ ARQUIVOS_DIR = (
 
 BACKUPS_DIR = (
     BASE_DIR /
-    "data" /
+    "storage" /
     "backups"
 )
 
