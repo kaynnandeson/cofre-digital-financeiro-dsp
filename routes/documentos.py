@@ -280,7 +280,10 @@ def baixar_documento(documento_id: int):
         filename=documento["nome_original"]
     )
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> cd97c80b2f3fdf471587be4b58b6728945b6eeab
 @router.get(
     "/{documento_id}/integridade"
 )
@@ -344,7 +347,10 @@ def verificar_integridade(documento_id: int):
         "integro": integro
     }
 
+<<<<<<< HEAD
+=======
 
+>>>>>>> cd97c80b2f3fdf471587be4b58b6728945b6eeab
 @router.put(
     "/{documento_id}",
     response_model=Documento,
