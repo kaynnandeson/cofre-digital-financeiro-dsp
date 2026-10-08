@@ -1,7 +1,7 @@
 
 from pathlib import Path
 from datetime import datetime
-
+from pydantic import ValidationError
 import xml.etree.ElementTree as ET
 
 from fastapi import (
@@ -122,23 +122,37 @@ def criar_documento(
         caminho_arquivo
     )
 
-    documento = Documento(
-        id=novo_id,
-        nome_original=nome_original,
-        nome_armazenado=nome_armazenado,
-        extensao=extensao,
-        tipo_mime=arquivo.content_type or "application/octet-stream",
-        tamanho=tamanho,
-        categoria=categoria,
-        descricao=descricao,
-        data_upload=datetime.now(),
-        sha256=sha256,
-        tipo=tipo,
-        competencia=competencia,
-        valor=valor,
-        centro_de_custo=centro_de_custo,
-        responsavel=responsavel,
-    )
+    try:
+        documento = Documento(
+            id=novo_id,
+            nome_original=nome_original,
+            nome_armazenado=nome_armazenado,
+            extensao=extensao,
+            tipo_mime=arquivo.content_type or "application/octet-stream",
+            tamanho=tamanho,
+            categoria=categoria,
+            descricao=descricao,
+            data_upload=datetime.now(),
+            sha256=sha256,
+            tipo=tipo,
+            competencia=competencia,
+            valor=valor,
+            centro_de_custo=centro_de_custo,
+            responsavel=responsavel,
+        )
+
+    except ValidationError:
+        caminho_arquivo.unlink(missing_ok=True)
+
+        logger.warning(
+            "Tentativa de upload com metadados inválidos: %s",
+            nome_original,
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Dados do documento inválidos."
+        )
 
     adicionar(
         DOCUMENTOS_FILE,
@@ -152,7 +166,6 @@ def criar_documento(
     )
 
     return documento
-
 
 @router.get(
     "",

@@ -17,7 +17,7 @@ CAMPOS_CSV = [
     "data_upload",
     "sha256",
 
-    # Campos financeiros
+    
     "tipo",
     "competencia",
     "valor",

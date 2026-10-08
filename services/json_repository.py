@@ -300,8 +300,6 @@ def verificar_integridade_global(
             documento["nome_armazenado"]
         )
 
-        # Arquivo está cadastrado no JSON,
-        # mas não existe fisicamente
         if not caminho_arquivo.exists():
             nao_localizados += 1
             continue
