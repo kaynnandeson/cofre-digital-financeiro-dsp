@@ -1,0 +1,2 @@
+﻿id,nome_original,nome_armazenado,extensao,tipo_mime,tamanho,categoria,descricao,data_upload,sha256,tipo,competencia,valor,centro_de_custo,responsavel
+1,GIC_evolução e conexões.pdf,1.pdf,.pdf,application/pdf,329632.0,string,Documento PDF utilizado para teste,2026-10-01T13:19:52.095628,ebd059bd326d1ce8cbe42dfc939450471e24f18e9c3cfb6acd44710a4041484d,string,string,12.0,string,string

@@ -35,6 +35,13 @@ def ler_json(arquivo: Path) -> list[dict[str, Any]]:
             f"O arquivo {arquivo.name} contém JSON inválido."
         ) from erro
 
+    except OSError as erro:
+        logger.error(
+            "Erro ao ler arquivo %s: %s",
+            arquivo.name,
+            erro,
+        )
+        raise
 
 def escrever_json(
     arquivo: Path,
@@ -42,20 +49,28 @@ def escrever_json(
 ) -> None:
     garantir_arquivo(arquivo)
 
-    with open(arquivo, "w", encoding="utf-8") as file:
-        json.dump(
-            dados,
-            file,
-            ensure_ascii=False,
-            indent=4,
+    try:
+        with open(arquivo, "w", encoding="utf-8") as file:
+            json.dump(
+                dados,
+                file,
+                ensure_ascii=False,
+                indent=4,
+            )
+
+        logger.debug(
+            "Arquivo %s atualizado com %d registro(s).",
+            arquivo.name,
+            len(dados),
         )
 
-    logger.debug(
-        "Arquivo %s atualizado com %d registro(s).",
-        arquivo.name,
-        len(dados),
-    )
-
+    except OSError as erro:
+        logger.error(
+            "Erro ao escrever no arquivo %s: %s",
+            arquivo.name,
+            erro,
+        )
+        raise
 
 def buscar_por_id(
     arquivo: Path,
@@ -153,11 +168,13 @@ def filtrar(
 
 def calcular_estatisticas(
     arquivo: Path,
-    ) -> dict[str, Any]:
+) -> dict[str, Any]:
     dados = ler_json(arquivo)
 
     quantidade_por_extensao = {}
     quantidade_por_categoria = {}
+    quantidade_por_competencia = {}
+    quantidade_por_centro_de_custo = {}
 
     tamanho_total = 0
     valor_total = 0
@@ -165,25 +182,58 @@ def calcular_estatisticas(
     for item in dados:
         extensao = item.get("extensao")
         categoria = item.get("categoria")
+        competencia = item.get("competencia")
+        centro_de_custo = item.get("centro_de_custo")
 
         if extensao:
             quantidade_por_extensao[extensao] = (
-                quantidade_por_extensao.get(extensao, 0) + 1
+                quantidade_por_extensao.get(
+                    extensao,
+                    0
+                ) + 1
             )
 
         if categoria:
             quantidade_por_categoria[categoria] = (
-                quantidade_por_categoria.get(categoria, 0) + 1
+                quantidade_por_categoria.get(
+                    categoria,
+                    0
+                ) + 1
             )
 
-        tamanho_total += item.get("tamanho", 0)
-        valor_total += item.get("valor", 0)
+        if competencia:
+            quantidade_por_competencia[competencia] = (
+                quantidade_por_competencia.get(
+                    competencia,
+                    0
+                ) + 1
+            )
+
+        if centro_de_custo:
+            quantidade_por_centro_de_custo[centro_de_custo] = (
+                quantidade_por_centro_de_custo.get(
+                    centro_de_custo,
+                    0
+                ) + 1
+            )
+
+        tamanho_total += item.get(
+            "tamanho",
+            0
+        )
+
+        valor_total += item.get(
+            "valor",
+            0
+        )
 
     return {
         "quantidade_total": len(dados),
         "tamanho_total": tamanho_total,
         "quantidade_por_extensao": quantidade_por_extensao,
         "quantidade_por_categoria": quantidade_por_categoria,
+        "quantidade_por_competencia": quantidade_por_competencia,
+        "quantidade_por_centro_de_custo": quantidade_por_centro_de_custo,
         "valor_total": valor_total,
     }
 
@@ -232,3 +282,44 @@ def calcular_hash_sha256(caminho_arquivo: Path) -> str:
     )
 
     return hash_calculado
+
+def verificar_integridade_global(
+    arquivo_json: Path,
+    diretorio_arquivos: Path,
+) -> dict[str, int]:
+
+    documentos = ler_json(arquivo_json)
+
+    integros = 0
+    alterados = 0
+    nao_localizados = 0
+
+    for documento in documentos:
+        caminho_arquivo = (
+            diretorio_arquivos /
+            documento["nome_armazenado"]
+        )
+
+        # Arquivo está cadastrado no JSON,
+        # mas não existe fisicamente
+        if not caminho_arquivo.exists():
+            nao_localizados += 1
+            continue
+
+        sha256_atual = calcular_hash_sha256(
+            caminho_arquivo
+        )
+
+        sha256_armazenado = documento["sha256"]
+
+        if sha256_atual == sha256_armazenado:
+            integros += 1
+        else:
+            alterados += 1
+
+    return {
+        "documentos_verificados": len(documentos),
+        "documentos_integros": integros,
+        "documentos_alterados": alterados,
+        "arquivos_nao_localizados": nao_localizados,
+    }
