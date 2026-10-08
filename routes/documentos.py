@@ -2,6 +2,8 @@
 from pathlib import Path
 from datetime import datetime
 
+import xml.etree.ElementTree as ET
+
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -96,6 +98,23 @@ def criar_documento(
         ARQUIVOS_DIR,
         nome_armazenado
     )
+
+    if extensao == ".xml":
+        try:
+            ET.parse(caminho_arquivo)
+
+        except ET.ParseError:
+            caminho_arquivo.unlink(missing_ok=True)
+
+            logger.warning(
+                "Tentativa de upload de XML inválido: %s",
+                nome_original,
+            )
+
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Arquivo XML inválido."
+            )
 
     tamanho = caminho_arquivo.stat().st_size
 
