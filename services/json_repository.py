@@ -35,6 +35,13 @@ def ler_json(arquivo: Path) -> list[dict[str, Any]]:
             f"O arquivo {arquivo.name} contém JSON inválido."
         ) from erro
 
+    except OSError as erro:
+        logger.error(
+            "Erro ao ler arquivo %s: %s",
+            arquivo.name,
+            erro,
+        )
+        raise
 
 def escrever_json(
     arquivo: Path,
@@ -42,20 +49,28 @@ def escrever_json(
 ) -> None:
     garantir_arquivo(arquivo)
 
-    with open(arquivo, "w", encoding="utf-8") as file:
-        json.dump(
-            dados,
-            file,
-            ensure_ascii=False,
-            indent=4,
+    try:
+        with open(arquivo, "w", encoding="utf-8") as file:
+            json.dump(
+                dados,
+                file,
+                ensure_ascii=False,
+                indent=4,
+            )
+
+        logger.debug(
+            "Arquivo %s atualizado com %d registro(s).",
+            arquivo.name,
+            len(dados),
         )
 
-    logger.debug(
-        "Arquivo %s atualizado com %d registro(s).",
-        arquivo.name,
-        len(dados),
-    )
-
+    except OSError as erro:
+        logger.error(
+            "Erro ao escrever no arquivo %s: %s",
+            arquivo.name,
+            erro,
+        )
+        raise
 
 def buscar_por_id(
     arquivo: Path,
